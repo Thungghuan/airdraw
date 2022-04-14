@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { requestIdleCallback, drawOnCanvas } from './utils'
+import { requestIdleCallback, drawOnCanvas, handleMousePoint } from './utils'
 import { Point } from './types'
 
 const displayX = ref(0)
@@ -21,26 +21,12 @@ onMounted(() => {
   canvasContext = canvasEl.getContext('2d')!
 })
 
-const handleMousePoint = (evt: TouchEvent | MouseEvent): Point => {
-  let x, y
-  if ('touches' in evt && evt.touches && evt.touches[0]) {
-    x = evt.touches[0].pageX * 2
-    y = evt.touches[0].pageY * 2
-  } else {
-    evt = evt as MouseEvent
-    x = evt.pageX * 2
-    y = evt.pageY * 2
-  }
-
-  displayX.value = x
-  displayY.value = y
-
-  return { x, y }
-}
-
 const onDrawStart = (evt: TouchEvent | MouseEvent) => {
   isMousedown = true
   const point = handleMousePoint(evt)
+
+  displayX.value = point.x
+  displayY.value = point.y
 
   points.push(point)
   drawOnCanvas(canvasContext!, points)
@@ -53,6 +39,9 @@ const onDrawMove = (evt: TouchEvent | MouseEvent) => {
   const point = handleMousePoint(evt)
   points.push(point)
   if (points.length > 3) points.shift()
+
+  displayX.value = point.x
+  displayY.value = point.y
 
   drawOnCanvas(canvasContext!, points)
 }

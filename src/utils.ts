@@ -1,4 +1,4 @@
-import { Point } from "./types"
+import { Point } from './types'
 
 // polyfill `requestIdleCallback`
 export const requestIdleCallback =
@@ -29,4 +29,18 @@ export function drawOnCanvas(
     context.moveTo(point.x, point.y)
     context.stroke()
   }
+}
+
+export const handleMousePoint = (evt: TouchEvent | MouseEvent): Point => {
+  let x, y
+  if ('touches' in evt && evt.touches && evt.touches[0]) {
+    x = evt.touches[0].pageX * 2
+    y = evt.touches[0].pageY * 2
+  } else {
+    evt = evt as MouseEvent
+    x = evt.pageX * 2
+    y = evt.pageY * 2
+  }
+
+  return { x, y }
 }
