@@ -44,6 +44,10 @@ const onDrawMove = (evt: TouchEvent | MouseEvent) => {
   displayY.value = point.y
 
   drawOnCanvas(canvasContext!, points)
+
+  if (import.meta.hot) {
+    import.meta.hot.send('airdraw:draw-moving', { points })
+  }
 }
 
 const onDrawEnd = () => {

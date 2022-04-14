@@ -2,6 +2,7 @@ import { defineConfig, createLogger } from 'vite'
 import Vue from '@vitejs/plugin-vue'
 import UnoCSS from 'unocss/vite'
 import { presetUno, presetAttributify } from 'unocss'
+import AirDrawPlugin from './plugin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,6 +12,7 @@ export default defineConfig({
     host: true
   },
   plugins: [
+    AirDrawPlugin(),
     Vue(),
     UnoCSS({
       presets: [presetUno(), presetAttributify()]
