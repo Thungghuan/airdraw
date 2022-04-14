@@ -1,4 +1,4 @@
-# AirDraw(WIP)
+# AirDraw
 
 Draw on iPad(or other write-friendly devices), display on PC in the same time.
 
