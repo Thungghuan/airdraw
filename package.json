@@ -20,6 +20,8 @@
     "qrcode-terminal": "^0.12.0",
     "typescript": "^4.6.3",
     "unocss": "^0.31.2",
-    "vite": "^2.9.1"
+    "vite": "^2.9.1",
+    "vite-plugin-pages": "^0.22.0",
+    "vue-router": "^4.0.14"
   }
 }
