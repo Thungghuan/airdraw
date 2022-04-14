@@ -1,171 +1,84 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { requestIdleCallback, drawOnCanvas } from './utils'
+import { Point } from './types'
 
-let lineWidth = 0
+const displayX = ref(0)
+const displayY = ref(0)
+
 let isMousedown = false
-let points: any[] = []
+
+const points: Point[] = []
+
 const canvasRef = ref<HTMLCanvasElement>()
+let canvasContext: CanvasRenderingContext2D | undefined
 
 onMounted(() => {
   const canvasEl = canvasRef.value!
   canvasEl.width = window.innerWidth * 2
   canvasEl.height = window.innerHeight * 2
 
-  const context = canvasEl.getContext('2d')!
-
-  const strokeHistory: any[] = []
-
-  const requestIdleCallback =
-    window.requestIdleCallback ||
-    function (fn: any) {
-      setTimeout(fn, 1)
-    }
-
-  /**
-   * This function takes in an array of points and draws them onto the canvasEl.
-   * @param {array} stroke array of points to draw on the canvas
-   * @return {void}
-   */
-  function drawOnCanvas(stroke: any[]) {
-    context.strokeStyle = 'black'
-    context.lineCap = 'round'
-    context.lineJoin = 'round'
-
-    const l = stroke.length - 1
-    if (stroke.length >= 3) {
-      const xc = (stroke[l].x + stroke[l - 1].x) / 2
-      const yc = (stroke[l].y + stroke[l - 1].y) / 2
-      context.lineWidth = stroke[l - 1].lineWidth
-      context.quadraticCurveTo(stroke[l - 1].x, stroke[l - 1].y, xc, yc)
-      context.stroke()
-      context.beginPath()
-      context.moveTo(xc, yc)
-    } else {
-      const point = stroke[l]
-      context.lineWidth = point.lineWidth
-      context.strokeStyle = point.color
-      context.beginPath()
-      context.moveTo(point.x, point.y)
-      context.stroke()
-    }
-  }
-
-  for (const ev of ['touchstart', 'mousedown']) {
-    canvasEl.addEventListener(ev, function (e: any) {
-      let pressure = 0.1
-      let x, y
-      if (
-        e.touches &&
-        e.touches[0] &&
-        typeof e.touches[0]['force'] !== 'undefined'
-      ) {
-        if (e.touches[0]['force'] > 0) {
-          pressure = e.touches[0]['force']
-        }
-        x = e.touches[0].pageX * 2
-        y = e.touches[0].pageY * 2
-      } else {
-        pressure = 1.0
-        x = e.pageX * 2
-        y = e.pageY * 2
-      }
-
-      isMousedown = true
-
-      lineWidth = Math.log(pressure + 1) * 40
-      context.lineWidth = lineWidth // pressure * 50;
-
-      points.push({ x, y, lineWidth })
-      drawOnCanvas(points)
-    })
-  }
-
-  for (const ev of ['touchmove', 'mousemove']) {
-    canvasEl.addEventListener(ev, function (e: any) {
-      if (!isMousedown) return
-      e.preventDefault()
-
-      let pressure = 0.1
-      let x, y
-      if (
-        e.touches &&
-        e.touches[0] &&
-        typeof e.touches[0]['force'] !== 'undefined'
-      ) {
-        if (e.touches[0]['force'] > 0) {
-          pressure = e.touches[0]['force']
-        }
-        x = e.touches[0].pageX * 2
-        y = e.touches[0].pageY * 2
-      } else {
-        pressure = 1.0
-        x = e.pageX * 2
-        y = e.pageY * 2
-      }
-
-      // smoothen line width
-      lineWidth = Math.log(pressure + 1) * 40 * 0.2 + lineWidth * 0.8
-      points.push({ x, y, lineWidth })
-
-      drawOnCanvas(points)
-
-      requestIdleCallback(() => {
-        // $force.textContent = 'force = ' + pressure
-        // const touch = e.touches ? e.touches[0] : null
-        // if (touch) {
-        //   $touches.innerHTML = `
-        //   touchType = ${touch.touchType} ${
-        //     touch.touchType === 'direct' ? '👆' : '✍️'
-        //   } <br/>
-        //   radiusX = ${touch.radiusX} <br/>
-        //   radiusY = ${touch.radiusY} <br/>
-        //   rotationAngle = ${touch.rotationAngle} <br/>
-        //   altitudeAngle = ${touch.altitudeAngle} <br/>
-        //   azimuthAngle = ${touch.azimuthAngle} <br/>
-        // `
-        // }
-      })
-    })
-  }
-
-  for (const ev of ['touchend', 'touchleave', 'mouseup']) {
-    canvasEl.addEventListener(ev, function (e: any) {
-      let pressure = 0.1
-      let x, y
-
-      if (
-        e.touches &&
-        e.touches[0] &&
-        typeof e.touches[0]['force'] !== 'undefined'
-      ) {
-        if (e.touches[0]['force'] > 0) {
-          pressure = e.touches[0]['force']
-        }
-        x = e.touches[0].pageX * 2
-        y = e.touches[0].pageY * 2
-      } else {
-        pressure = 1.0
-        x = e.pageX * 2
-        y = e.pageY * 2
-      }
-
-      isMousedown = false
-
-      requestIdleCallback(function () {
-        strokeHistory.push([...points])
-        points = []
-      })
-
-      lineWidth = 0
-    })
-  }
+  canvasContext = canvasEl.getContext('2d')!
 })
+
+const handleMousePoint = (evt: TouchEvent | MouseEvent): Point => {
+  let x, y
+  if ('touches' in evt && evt.touches && evt.touches[0]) {
+    x = evt.touches[0].pageX * 2
+    y = evt.touches[0].pageY * 2
+  } else {
+    evt = evt as MouseEvent
+    x = evt.pageX * 2
+    y = evt.pageY * 2
+  }
+
+  displayX.value = x
+  displayY.value = y
+
+  return { x, y }
+}
+
+const onDrawStart = (evt: TouchEvent | MouseEvent) => {
+  isMousedown = true
+  const point = handleMousePoint(evt)
+
+  points.push(point)
+  drawOnCanvas(canvasContext!, points)
+}
+
+const onDrawMove = (evt: TouchEvent | MouseEvent) => {
+  if (!isMousedown) return
+  evt.preventDefault()
+
+  const point = handleMousePoint(evt)
+  points.push(point)
+  if (points.length > 3) points.shift()
+
+  drawOnCanvas(canvasContext!, points)
+}
+
+const onDrawEnd = () => {
+  isMousedown = false
+  requestIdleCallback(() => (points.length = 0))
+}
 </script>
 
 <template>
   <div w-screen h-screen bg-gray font-mono select-none>
     <h1 absolute m0 left-5 top-3 text-gray-700>AirDraw</h1>
-    <canvas w-full h-full ref="canvasRef" />
+    <div absolute left-5 bottom-10>x: {{ displayX }}; y: {{ displayY }}</div>
+    <canvas
+      w-full
+      h-full
+      @touchstart="onDrawStart"
+      @mousedown="onDrawStart"
+      @touchmove="onDrawMove"
+      @mousemove="onDrawMove"
+      @touchend="onDrawEnd"
+      @touchleave="onDrawEnd"
+      @mouseup="onDrawEnd"
+      ref="canvasRef"
+    />
   </div>
 </template>
 
