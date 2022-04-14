@@ -163,7 +163,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div w-screen h-screen bg-gray font-mono>
+  <div w-screen h-screen bg-gray font-mono select-none>
     <h1 absolute m0 left-5 top-3 text-gray-700>AirDraw</h1>
     <canvas w-full h-full ref="canvasRef" />
   </div>
